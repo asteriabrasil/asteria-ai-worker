@@ -1,0 +1,24 @@
+{
+  "name": "asteria-ai-worker",
+  "version": "1.0.0",
+  "description": "Autonomous ADO Task executor using Claude tool-use API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": { "ai-worker": "./dist/index.js" },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "dotenv": "^16.4.0",
+    "glob": "^11.0.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}
