@@ -6,17 +6,15 @@ type AdoConfig = Config["ado"];
 export class AdoClient {
   private readonly authHeader: string;
   private readonly baseUrl: string;
-  private readonly projectUrl: string;
 
   constructor(private readonly config: AdoConfig) {
     const token = Buffer.from(`:${config.pat}`).toString("base64");
     this.authHeader = `Basic ${token}`;
     this.baseUrl = `https://dev.azure.com/${config.org}`;
-    this.projectUrl = `${this.baseUrl}/${encodeURIComponent(config.project)}`;
   }
 
   async runWiql(query: string): Promise<WiqlResult> {
-    const url = `${this.projectUrl}/_apis/wit/wiql?api-version=7.2-preview.2`;
+    const url = `${this.baseUrl}/_apis/wit/wiql?api-version=7.2-preview.2`;
     const response = await this.apiFetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +81,12 @@ export class AdoClient {
   }
 
   async addComment(id: number, text: string): Promise<void> {
-    const url = `${this.projectUrl}/_apis/wit/workItems/${id}/comments?format=0&api-version=7.2-preview.4`;
+    // Para Cross-Project, é necessário incluir o projectName. Como não temos mais na config global,
+    // podemos extrair o TeamProject do workItem antes de comentar.
+    const wi = await this.getWorkItem(id);
+    const projectName = (wi as any).fields?.["System.TeamProject"] || wi.areaPath?.split('\\')[0] || "Unknown";
+    const url = `${this.baseUrl}/${encodeURIComponent(projectName)}/_apis/wit/workItems/${id}/comments?format=0&api-version=7.2-preview.4`;
+    
     await this.apiFetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,7 +95,10 @@ export class AdoClient {
   }
 
   async getComments(id: number): Promise<AdoComment[]> {
-    const url = `${this.projectUrl}/_apis/wit/workItems/${id}/comments?api-version=7.2-preview.4`;
+    const wi = await this.getWorkItem(id);
+    const projectName = (wi as any).fields?.["System.TeamProject"] || wi.areaPath?.split('\\')[0] || "Unknown";
+    const url = `${this.baseUrl}/${encodeURIComponent(projectName)}/_apis/wit/workItems/${id}/comments?api-version=7.2-preview.4`;
+    
     const response = await this.apiFetch(url);
     const data = (await response.json()) as {
       comments?: Array<{

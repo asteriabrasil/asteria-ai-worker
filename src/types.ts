@@ -1,22 +1,23 @@
 // ─── Config ──────────────────────────────────────────────────────────────────
 
+export interface RunOptions {
+  agent: string;
+  timeLimitHours?: number;
+  taskId?: number;
+}
+
 export interface Config {
   ado: {
     org: string;
     pat: string;
     assignedTo: string;
-    project: string;
-  };
-  anthropic: {
-    apiKey: string;
-    model: string;
-    maxTokens: number;
   };
   workspace: {
     dir: string;
     bashPath: string;
   };
   tokenLimitThreshold: number;
+  globalResourcesRepo?: string;
 }
 
 // ─── ADO models ──────────────────────────────────────────────────────────────

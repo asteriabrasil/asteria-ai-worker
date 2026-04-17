@@ -1,30 +1,48 @@
-import { config as dotenvConfig } from "dotenv";
+import fs from "fs";
+import path from "path";
 import { z } from "zod";
 import type { Config } from "./types.js";
 
-const EnvSchema = z.object({
-  ADO_ORG: z.string().min(1),
-  ADO_PAT: z.string().min(1),
-  ADO_ASSIGNED_TO: z.string().min(1),
-  ADO_PROJECT: z.string().min(1),
-  ANTHROPIC_API_KEY: z.string().min(1),
-  CLAUDE_MODEL: z.string().default("claude-sonnet-4-6"),
-  WORKSPACE_DIR: z.string().min(1),
-  TOKEN_LIMIT_THRESHOLD: z
-    .string()
-    .optional()
-    .transform((v) => (v ? parseInt(v, 10) : 150000)),
-  ANTHROPIC_MAX_TOKENS: z
-    .string()
-    .optional()
-    .transform((v) => (v ? parseInt(v, 10) : 8192)),
-  BASH_PATH: z.string().default("C:/Program Files/Git/bin/bash.exe"),
+const SETTINGS_PATH = path.resolve(process.cwd(), "config", "settings.json");
+
+const ConfigSchema = z.object({
+  ado: z.object({
+    org: z.string().min(1, "ADO Org is required"),
+    pat: z.string().min(1, "ADO PAT is required"),
+    assignedTo: z.string().min(1, "ADO AssignedTo email is required"),
+  }),
+  workspace: z.object({
+    dir: z.string().min(1, "Workspace directory is required"),
+    bashPath: z.string().default("C:/Program Files/Git/bin/bash.exe"),
+  }),
+  tokenLimitThreshold: z.number().default(150000),
+  globalResourcesRepo: z.string().optional(),
 });
 
 export async function loadConfig(): Promise<Config> {
-  dotenvConfig();
+  if (!fs.existsSync(SETTINGS_PATH)) {
+    throw new Error(
+      `Configuration file not found at ${SETTINGS_PATH}\n` +
+      `Please create this file based on the instructions in the README.`
+    );
+  }
 
-  const parsed = EnvSchema.safeParse(process.env);
+  let content: string;
+  let json: unknown;
+
+  try {
+    content = fs.readFileSync(SETTINGS_PATH, "utf-8");
+  } catch (err) {
+    throw new Error(`Failed to read settings.json: ${String(err)}`);
+  }
+
+  try {
+    json = JSON.parse(content);
+  } catch (err) {
+    throw new Error(`Invalid JSON format in settings.json: ${String(err)}`);
+  }
+
+  const parsed = ConfigSchema.safeParse(json);
 
   if (!parsed.success) {
     const missing = parsed.error.issues
@@ -33,24 +51,5 @@ export async function loadConfig(): Promise<Config> {
     throw new Error(`Configuration validation failed:\n${missing}`);
   }
 
-  const env = parsed.data;
-
-  return {
-    ado: {
-      org: env.ADO_ORG,
-      pat: env.ADO_PAT,
-      assignedTo: env.ADO_ASSIGNED_TO,
-      project: env.ADO_PROJECT,
-    },
-    anthropic: {
-      apiKey: env.ANTHROPIC_API_KEY,
-      model: env.CLAUDE_MODEL,
-      maxTokens: env.ANTHROPIC_MAX_TOKENS,
-    },
-    workspace: {
-      dir: env.WORKSPACE_DIR,
-      bashPath: env.BASH_PATH,
-    },
-    tokenLimitThreshold: env.TOKEN_LIMIT_THRESHOLD,
-  };
+  return parsed.data;
 }
