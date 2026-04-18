@@ -21,6 +21,10 @@ export async function runAgentCli(
       ? `\n## GLOBAL SKILLS & RULES (MANDATORY):\n${globalSkillsText}\n`
       : "";
 
+    const humanReplyInstruction = context.humanReply
+      ? `\n## HUMAN REPLY TO PREVIOUS QUARANTINE:\nThe user has answered your previous question/request:\n"${context.humanReply}"\nUse this information to proceed.\n`
+      : "";
+
     // 2. Constrói a instrução para o CLI
     const instruction = `
 You are the Asteria AI Worker.
@@ -32,18 +36,20 @@ ${context.pbi.description ?? ""}
 
 Task: #${context.task.id}: ${context.task.title}
 ${context.task.description ?? ""}
-
+${humanReplyInstruction}
 ## CRITICAL INSTRUCTIONS:
-1. Do the work requested in the task, adhering to the GLOBAL SKILLS mentioned above.
-2. Commit and push your changes to the repository.
-3. Before you finish, you MUST create a file named exactly '.asteria-result.json' in the root of this project (${cwd}).
-4. The file MUST contain valid JSON with the following format:
+1. AUTONOMY: You MUST run completely autonomously. Do NOT prompt for human authorization or wait for interactive input. You are running in a CI/CD-like environment.
+2. BRANCHING: Before making ANY code changes, you MUST create and checkout a new branch following the pattern: git checkout -b feature/task-${context.task.id}
+3. IMPLEMENTATION: Do the work requested in the task, adhering strictly to the GLOBAL SKILLS.
+4. DELIVERY: Commit and push your changes to the remote repository.
+5. HANDSHAKE: Before you finish, you MUST create a file named exactly '.asteria-result.json' in the root of this project (${cwd}).
+6. HANDSHAKE FORMAT: The file MUST contain valid JSON with the following format:
    {
      "outcome": "done" | "quarantine",
      "message": "A brief summary of what was done or why you are stuck"
    }
-5. Do NOT exit or finish until this file is successfully created. If you are stuck or need a human, use outcome "quarantine".
-6. If you need additional tools, check the MCP configurations in your configuration directory.
+7. QUARANTINE PROTOCOL: Do NOT exit or finish until this file is successfully created. If you are stuck, lack permission, or require a human to answer a question, use outcome "quarantine" and put your question in the "message" field.
+8. If you need additional tools, check the MCP configurations in your configuration directory.
 `;
 
     // 3. Prepara o comando

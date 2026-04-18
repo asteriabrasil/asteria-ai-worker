@@ -110,6 +110,22 @@ export async function run(config: Config, options: RunOptions): Promise<void> {
     }
   }
 
+  // Busca e analisa histórico de comentários para pegar humanReply
+  logger.info(`Fetching comments for task #${task.id}...`);
+  const comments = await ado.getComments(task.id);
+  task.comments = comments;
+
+  let humanReply: string | null = null;
+  // Procura de trás pra frente por [Asteria-Reply]
+  for (let i = comments.length - 1; i >= 0; i--) {
+    const text = comments[i]?.text || "";
+    if (text.includes("[Asteria-Reply]")) {
+       humanReply = text;
+       logger.info("Human reply found. Injecting into context.");
+       break;
+    }
+  }
+
   // Prepara estado ADO
   if (task.state === "To Do") {
     logger.info("Transitioning Task and PBI to 'In Progress'...");
@@ -120,7 +136,7 @@ export async function run(config: Config, options: RunOptions): Promise<void> {
   }
 
   // Prepara o contexto e executa
-  const context = { task, pbi, plan: null, resumeFromComment: null };
+  const context = { task, pbi, plan: null, resumeFromComment: null, humanReply };
   
   logger.step("AGENT EXECUTION");
   logger.info(`Launching ${options.agent.toUpperCase()} CLI... Time limit: ${options.timeLimitHours ? `${options.timeLimitHours} hours` : "None"}.`);

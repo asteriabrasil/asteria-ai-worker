@@ -49,7 +49,11 @@ export async function handleOutcome(
     case "quarantine": {
       logger.info(`Task #${taskId} quarantined. Notifying human.`);
 
-      const quarantineComment = buildQuarantineComment(result.message, PEDRO_MENTION);
+      // Extrair o nome do usuário ou usar menção padrão se não for encontrado
+      const assignedToName = context.task.assignedTo?.split('<')[0]?.trim() || "Pedro Nunes";
+      const mention = `@${assignedToName}`;
+
+      const quarantineComment = buildQuarantineComment(result.message, mention);
       await ado.addComment(taskId, quarantineComment);
       await ado.updateState(taskId, "Quarantine");
       break;

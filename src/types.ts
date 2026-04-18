@@ -63,6 +63,7 @@ export interface TaskContext {
   pbi: AdoWorkItem;
   plan: string | null;
   resumeFromComment: string | null;
+  humanReply: string | null;
 }
 
 // ─── Agent results ────────────────────────────────────────────────────────────

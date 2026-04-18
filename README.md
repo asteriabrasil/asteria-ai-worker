@@ -6,14 +6,16 @@ O **Asteria AI Worker** atua como uma ponte: ele busca Tarefas atribuídas no se
 
 ## O que ele faz
 
-1. **Seleção Inteligente:** Consulta o ADO por Tarefas (Tasks) marcadas com a tag `ai-worker` atribuídas a você.
+1. **Seleção Inteligente:** Consulta o ADO por Tarefas (Tasks) marcadas com a tag `ai-worker` atribuídas a você, que estejam nos estados `To Do` ou `In Progress` e cuja Data de Início (`StartDate`) seja hoje ou anterior.
 2. **Contexto Completo:** Busca a descrição do Product Backlog Item (PBI) pai para alimentar a IA com as regras de negócio e critérios de aceitação.
-3. **Gerenciamento de Workspace:** Clona localmente o repositório (Git) contido na tarefa em uma pasta isolada.
+3. **Gerenciamento de Workspace & Branching:** Clona localmente o repositório (Git) contido na tarefa em uma pasta isolada e **cria uma nova branch (`feature/task-<ID>`)** de forma totalmente autônoma.
 4. **Contexto Dinâmico (Skills e MCPs):** Lê as configurações globais da sua máquina (`.claude` ou `.gemini`) ou sincroniza um repositório remoto de regras e injeta tudo na pasta clonada.
-5. **Execução de Agentes Locais:** Dispara processos filhos executando `claude` ou `gemini` na sua máquina local, entregando instruções rigorosas sobre a tarefa.
-6. **Tratamento de Contratos:** Aguarda a IA criar o arquivo de "aperto de mão" (`.asteria-result.json`) garantindo que o trabalho foi feito e "commitado".
-7. **Atualização do ADO:** Move a Task para `Done` (ou `Quarantine` se houver bloqueios). Move o PBI pai para `Test` quando todas as tarefas estiverem finalizadas.
-8. **Logging Completo:** Salva todos os passos tomados pelo worker e as saídas das IAs em arquivos `.txt` (por data) dentro da pasta `/logs`.
+5. **Execução de Agentes Locais (100% Autônomo):** Dispara processos executando `claude` ou `gemini` localmente. O Agente é proibido de fazer perguntas interativas no terminal. Se ele precisar de intervenção humana (permissão ou dúvidas de negócio), ele acionará o Protocolo de Quarentena.
+6. **Protocolo de Quarentena & Comunicação Humana:** Se o agente ficar preso, ele publicará um comentário no Azure DevOps marcando o usuário designado com `@` e moverá a Task para `Quarantine`. 
+   - *Como responder:* O desenvolvedor responde o comentário no ADO iniciando a mensagem com **`[Asteria-Reply]`** e volta a tarefa para `In Progress`. Na próxima execução, o Worker lerá a sua resposta e injetará no cérebro do Agente para ele continuar!
+7. **Tratamento de Contratos:** Aguarda a IA criar o arquivo de "aperto de mão" (`.asteria-result.json`) garantindo que o trabalho foi feito e "commitado".
+8. **Atualização do ADO:** Move a Task para `Done`. Move o PBI pai para `Test` quando todas as tarefas estiverem finalizadas.
+9. **Logging Completo:** Salva todos os passos tomados pelo worker e as saídas das IAs em arquivos `.txt` (por data) dentro da pasta `/logs`.
 
 ## Configuração
 

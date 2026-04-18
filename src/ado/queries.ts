@@ -5,6 +5,8 @@ WHERE [System.WorkItemType] = 'Task'
   AND [System.AssignedTo] = '${assignedTo}'
   AND [System.Tags] CONTAINS 'ai-worker'
   AND [System.State] IN ('To Do', 'In Progress')
+  AND [Microsoft.VSTS.Scheduling.StartDate] <= @Today
+  AND [Microsoft.VSTS.Scheduling.FinishDate] IS EMPTY
 ORDER BY [System.State] ASC, [System.Id] ASC`;
 }
 
