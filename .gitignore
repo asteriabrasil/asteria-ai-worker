@@ -6,3 +6,6 @@ dist/
 workspace/
 
 config/settings.json
+
+.claude/
+.mcp.json
